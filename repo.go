@@ -98,7 +98,7 @@ func processReadme(r *bufio.Reader) string {
 		println(i)
 		i++
 
-		if l[0] != '*' {
+		if !(l[0] == '*' && l[1] != ' ') {
 			writeTblHead = true
 			buf.WriteString(l)
 		} else {
