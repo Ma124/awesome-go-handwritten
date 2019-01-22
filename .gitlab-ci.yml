@@ -1,0 +1,13 @@
+image: golang:1.10-alpine
+
+pages:
+  stage: deploy
+  script:
+  - go run repo.go --gh-token $GH_TOKEN
+  - cp tmpl public
+  artifacts:
+    paths:
+    - public
+  only:
+  - master
+
