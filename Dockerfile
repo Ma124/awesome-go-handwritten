@@ -5,4 +5,4 @@ RUN go get -u -v github.com/shurcooL/github_flavored_markdown github.com/gorilla
 
 WORKDIR /srv
 
-CMD ["go", "run", "repo.go"]
+CMD ["go", "run", "repo.go", "--gh-token", "$GH_TOKEN"]
