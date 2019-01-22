@@ -6,7 +6,7 @@ pages:
   - apk add --update -t build-deps curl go git libc-dev gcc libgcc
   - go get -u -v github.com/shurcooL/github_flavored_markdown github.com/gorilla/mux github.com/xeonx/timeago
   - go run repo.go --no-checkout --gh-token "$GH_TOKEN" --compile
-  - cp tmpl public
+  - cp -r tmpl public
   artifacts:
     paths:
     - public
