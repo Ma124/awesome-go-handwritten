@@ -201,9 +201,11 @@ func main() {
 	}
 
 	if compile {
+		println("Compiling HTML")
 		generateHTML()
 		return
 	} else {
+		println("Starting server")
 		r := mux.NewRouter()
 		r.HandleFunc("/hook", hookHandler)
 		http.ListenAndServe(":9000", r)
