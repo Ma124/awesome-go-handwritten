@@ -159,7 +159,7 @@ func processReadme(r *bufio.Reader) string {
 func printProgressBar() {
 	offset, err := f.Seek(0, 1)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "cannot seek current position")
+		fmt.Println("cannot seek current position")
 	}
 
 	pb.Set(int(offset))
@@ -169,7 +169,6 @@ func fetchAndWriteGitHub(buf *strings.Builder, name, url, desc string, reqCounts
 	var data []byte
 
 	if reqCounts < maxReqCount {
-		fmt.Fprintln(os.Stderr, "https://api.github.com/repos/"+url[urlOffset:])
 		resp, err := http.Get("https://api.github.com/repos/" + url[urlOffset:] + "?access_token=" + githubToken)
 		if err != nil {
 			panic(err)
