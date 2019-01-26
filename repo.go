@@ -14,9 +14,11 @@ import (
 	"text/template"
 	"time"
 
+	"fmt"
 	"github.com/gorilla/mux"
 	gfm "github.com/shurcooL/github_flavored_markdown"
 	"github.com/xeonx/timeago"
+	"gitlab.com/Ma_124/progressbar"
 )
 
 // memory usage optimizations
@@ -36,6 +38,12 @@ const (
 
 var (
 	doneResp = []byte("Done!\n")
+)
+
+var (
+	f    *os.File
+	size int64
+	pb   *progressbar.ProgressBar
 )
 
 type content struct {
@@ -68,7 +76,14 @@ func generateHTML() {
 		}
 	}
 
-	f, err := os.Open(readmePath)
+	fi, err := os.Stat(readmePath)
+	if err != nil {
+		panic(err)
+	}
+	size = fi.Size()
+	pb = progressbar.New(int(size))
+
+	f, err = os.Open(readmePath)
 	if err != nil {
 		panic(err)
 	}
@@ -96,6 +111,7 @@ func processReadme(r *bufio.Reader) string {
 	i := 0
 	reqCounts := 0
 	for {
+		printProgressBar()
 		l, err := r.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -120,39 +136,13 @@ func processReadme(r *bufio.Reader) string {
 			desc := l[strings.Index(l, " - ")+3 : len(l)-1]
 			url := l[afterNameI+2 : strings.IndexByte(l[afterNameI+2:], ')')+afterNameI+2]
 			if strings.HasPrefix(url, "https://github.com/") {
-				var data []byte
-				reqCounts++
-				if reqCounts < maxReqCount {
-					resp, err := http.Get("https://api.github.com/repos/" + url[19:] + "?access_token=" + githubToken)
-					if err != nil {
-						panic(err)
-					}
-
-					data, err = ioutil.ReadAll(resp.Body)
-					if err != nil {
-						panic(err)
-					}
-					resp.Body.Close()
-				} else {
-					data = []byte(`{ "stargazers_count": 1234, "forks_count": 56, "open_issues_count": 7, "pushed_at": "2019-01-20T19:24:24Z" }`)
-				}
-
-				jsO := &ghJson{}
-				err = json.Unmarshal(data, jsO)
-				if err != nil {
-					panic(err)
-				}
-
-				if jsO.Message != "" {
-					WriteTableColumns(buf, "N/A", "N/A", "N/A", "N/A", name, url, desc)
-				} else {
-					t, err := time.Parse(time.RFC3339, jsO.LastCommit)
-					if err != nil {
-						panic(err)
-					}
-
-					WriteTableColumns(buf, strconv.Itoa(jsO.Stars), strconv.Itoa(jsO.Forks), strconv.Itoa(jsO.Issues), timeago.English.Format(t), name, url, desc)
-				}
+				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 19)
+			} else if strings.HasPrefix(url, "https://godoc.org/") {
+				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 29) // TODO test n' fix
+			} else if strings.HasPrefix(url, "http://github.com/") {
+				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 18) // TODO test n' fix
+			} else if strings.HasPrefix(url, "http://godoc.org/") {
+				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 28) // TODO test n' fix
 			} else {
 				WriteTableColumns(buf, "N/A", "N/A", "N/A", "N/A", name, url, desc)
 			}
@@ -161,7 +151,57 @@ func processReadme(r *bufio.Reader) string {
 			buf.WriteString(l)
 		}
 	}
+
+	pb.Finish()
 	return buf.String()
+}
+
+func printProgressBar() {
+	offset, err := f.Seek(0, 1)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "cannot seek current position")
+	}
+
+	pb.Set(int(offset))
+}
+
+func fetchAndWriteGitHub(buf *strings.Builder, name, url, desc string, reqCounts int, urlOffset int) (reqCountz int) {
+	var data []byte
+
+	if reqCounts < maxReqCount {
+		fmt.Fprintln(os.Stderr, "https://api.github.com/repos/"+url[urlOffset:])
+		resp, err := http.Get("https://api.github.com/repos/" + url[urlOffset:] + "?access_token=" + githubToken)
+		if err != nil {
+			panic(err)
+		}
+
+		data, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+		resp.Body.Close()
+	} else {
+		data = []byte(`{ "stargazers_count": 1234, "forks_count": 56, "open_issues_count": 7, "pushed_at": "2019-01-20T19:24:24Z" }`)
+	}
+
+	jsO := &ghJson{}
+	err := json.Unmarshal(data, jsO)
+	if err != nil {
+		panic(err)
+	}
+
+	if jsO.Message != "" {
+		WriteTableColumns(buf, "N/A", "N/A", "N/A", "N/A", name, url, desc)
+	} else {
+		t, err := time.Parse(time.RFC3339, jsO.LastCommit)
+		if err != nil {
+			panic(err)
+		}
+
+		WriteTableColumns(buf, strconv.Itoa(jsO.Stars), strconv.Itoa(jsO.Forks), strconv.Itoa(jsO.Issues), timeago.English.Format(t), name, url, desc) // TODO fork and improve timeago
+	}
+
+	return reqCounts + 1
 }
 
 func WriteTableColumns(buf *strings.Builder, stars, forks, openIssues, lastCommit, name, url, desc string) {
