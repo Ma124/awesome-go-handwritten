@@ -204,7 +204,7 @@ func fetchAndWriteGitHub(buf *strings.Builder, name, url, desc string, reqCounts
 		}
 		resp.Body.Close()
 	} else {
-		data = []byte(`{ "stargazers_count": 1234, "forks_count": 56, "open_issues_count": 7, "pushed_at": "2019-01-20T19:24:24Z" }`)
+		data = []byte(`{ "stargazers_count": 7654, "forks_count": 32, "open_issues_count": 1, "pushed_at": "2019-01-20T19:24:24Z" }`)
 	}
 
 	jsO := &ghJson{}
