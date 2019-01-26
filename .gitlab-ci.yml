@@ -4,7 +4,7 @@ pages:
   stage: deploy
   script:
   - apk add --update -t build-deps curl go git libc-dev gcc libgcc
-  - go get -u -v github.com/shurcooL/github_flavored_markdown github.com/gorilla/mux github.com/xeonx/timeago
+  - go get -u -v github.com/shurcooL/github_flavored_markdown github.com/gorilla/mux github.com/xeonx/timeago gitlab.com/Ma_124/progressbar
   - go run repo.go --no-checkout --gh-token "$GH_TOKEN" --compile
   - cp -r tmpl public
   artifacts:
