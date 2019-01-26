@@ -137,11 +137,11 @@ func processReadme(r *bufio.Reader) string {
 			url := l[afterNameI+2 : strings.IndexByte(l[afterNameI+2:], ')')+afterNameI+2]
 			if strings.HasPrefix(url, "https://github.com/") {
 				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 19)
-			} else if strings.HasPrefix(url, "https://godoc.org/") {
+			} else if strings.HasPrefix(url, "https://godoc.org/github.com/") {
 				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 29) // TODO test n' fix
 			} else if strings.HasPrefix(url, "http://github.com/") {
 				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 18) // TODO test n' fix
-			} else if strings.HasPrefix(url, "http://godoc.org/") {
+			} else if strings.HasPrefix(url, "http://godoc.org/github.com/") {
 				reqCounts = fetchAndWriteGitHub(buf, name, url, desc, reqCounts, 28) // TODO test n' fix
 			} else {
 				WriteTableColumns(buf, "N/A", "N/A", "N/A", "N/A", name, url, desc)
